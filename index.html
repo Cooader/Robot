@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Doctor</title>
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- New style -->
+    <style>
+        body {
+            background-color: black;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .eyes {
+            display: flex;
+            justify-content: space-around;
+            width: 300px;
+            margin-bottom: 20px;
+        }
+        .eye {
+            width: 100px;
+            height: 100px;
+            background-color: cyan;
+            border-radius: 25px;
+            box-shadow: 0 0 35px cyan;
+            transition: all 0.5s ease;
+        }
+        .talking .eye {
+            transform: scaleY(1.2);
+            background-color: yellow;
+            box-shadow: 0 0 35px yellow;
+        }
+        .start-button {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            padding: 15px 32px;
+            margin-top: 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+        }
+        .start-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="eyes" id="eyes">
+        <div class="eye"></div>
+        <div class="eye"></div>
+    </div>
+
+    <!-- Start Introduction Button -->
+    <button class="start-button" id="start-intro-btn">Start Introduction</button>
+
+    <script>
+        let recognition;
+
+        function animateSpeaking() {
+            document.getElementById("eyes").classList.add("talking");
+        }
+
+        function stopSpeakingAnimation() {
+            document.getElementById("eyes").classList.remove("talking");
+        }
+
+        function startIntroduction() {
+            let introText = "Hello, I’m Doctor Robo, your virtual doctor robot, here to provide personalized medical advice and monitor your wellness.";
+            playResponse(introText);
+        }
+
+        function playResponse(responseText) {
+            let utterance = new SpeechSynthesisUtterance(responseText);
+            
+            utterance.onstart = animateSpeaking;
+            utterance.onend = stopSpeakingAnimation;
+
+            speechSynthesis.speak(utterance);
+        }
+
+        // Speech Recognition Setup
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = false;
+            recognition.lang = "en-US";
+
+            recognition.onresult = function(event) {
+                let command = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+                console.log("You said: " + command);
+                handleVoiceCommand(command);
+            };
+
+            recognition.onerror = function(event) {
+                console.error("Speech recognition error: " + event.error);
+            };
+
+            recognition.onend = function() {
+                console.log("Voice recognition stopped. Restarting...");
+                recognition.start();
+            };
+
+            recognition.start();
+        } else {
+            alert("Speech recognition is not supported in your browser.");
+        }
+
+        // Voice Commands
+        const commands = {
+            "hello dr robo": startIntroduction,
+            "start introduction": startIntroduction,
+            "introduce yourself": startIntroduction,
+            "start intro": startIntroduction,  // ✅ Fixed: Added this missing command
+            "open schedule": () => openPage('schedule.html'),
+            "temperature": () => openPage('temperature.html'),
+            "blood pressure": () => openPage('bloodpressure.html'),
+            "oxygen": () => openPage('oxygen.html'),
+            "back": () => openPage('copy2.html'),
+            "headache": () => playResponse("Take Paracetamol 500mg, drink plenty of water, and rest in a quiet place."),
+            "body pain": () => playResponse("Take Ibuprofen 400mg after food, apply a hot or cold compress, and rest."),
+            "stomach pain": () => playResponse("Take antacids, avoid spicy food, and stay hydrated. Consult a doctor if severe."),
+            "vomiting": () => playResponse("Stay hydrated, take ORS solution, and eat small, bland meals."),
+            "cough": () => playResponse("Take warm fluids, honey, and over-the-counter cough medicine. Rest well."),
+            "cold": () => playResponse("Stay warm, drink hot fluids, and rest. Consult a doctor if needed."),
+            "fever": () => playResponse("Take Crocin 500mg, stay hydrated, and monitor your body temperature regularly.")
+        };
+
+        function handleVoiceCommand(command) {
+            const matchedCommand = Object.keys(commands).find(key =>
+                new RegExp(`\\b${key}\\b`, 'i').test(command)
+            );
+            if (matchedCommand) {
+                commands[matchedCommand]();
+            } else {
+                playResponse("Please give a valid command.");
+            }
+        }
+
+        function openPage(page) {
+            window.location.href = page;
+        }
+
+        document.getElementById('start-intro-btn').addEventListener('click', startIntroduction);
+    </script>
+
+</body>
+</html>
